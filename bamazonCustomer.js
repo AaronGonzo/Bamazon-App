@@ -19,6 +19,7 @@ connection.connect(function(error) {
   getAllProducts();
 });
 
+// function for the customers to see all products available for purchase
 function getAllProducts() {
   connection.query("Select * From products", function(error, results) {
     if (error) {
@@ -36,7 +37,7 @@ function promptCustomers(inventory) {
     .prompt([
       {
         type: "input",
-        message: "What is the ID of the item you are looking for?",
+        message: "What is the id of the item you are looking for?",
         name: "item"
       }
     ])
@@ -53,12 +54,12 @@ function promptCustomers(inventory) {
 }
 function checkID(choice, inventory) {
   for (let i = 0; i < inventory.length; i++) {
-    if (inventory[i].item_ID === choice) {
+    //console.log("inventory id: " + inventory.item_id);
+    if (inventory[i].item_id == choice) {
       return inventory[i];
-    } else {
-      return null;
     }
   }
+  return null;
 }
 function promptForQuantity(product) {
   inquirer
@@ -81,15 +82,32 @@ function promptForQuantity(product) {
 }
 
 function makePurchase(product, quantity) {
+  console.log(product);
   connection.query(
-    "Update products SET stock_quantity = stock_quantity - quantity WHERE item_ID = product.item_ID",
+    "Update products SET stock_quantity = stock_quantity - ? WHERE item_ID = ?",
+    [quantity, product.item_id],
     function(error, results) {
       console.log(error);
       console.log("You made a successful purchase!");
       console.log(
-        "You bought this item for this much: " + product.price * quantity
+        "You bought this item for this price: $ " + product.price * quantity
       );
-      getAllProducts();
+      inquirer
+        .prompt([
+          {
+            type: "input",
+            name: "FinishedShopping",
+            message: "Would you like to make another purchase?"
+          }
+        ])
+        .then(function(answer) {
+          if (answer.results === "Yes") {
+            getAllProducts();
+          } else {
+            console.log("Thank you for visiting Bamazon!");
+            connection.end();
+          }
+        });
     }
   );
 }
